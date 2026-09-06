@@ -125,7 +125,7 @@ class _GameScreenState extends State<GameScreen> {
 
   // ─── Guess Submission ───────────────────────────────────────────────────
 
-  void _submitGuess() {
+  Future<void> _submitGuess() async {
     if (_game.status != GameStatus.playing) return;
 
     final row = _game.activeRow;
@@ -150,10 +150,26 @@ class _GameScreenState extends State<GameScreen> {
     // Score the guess.
     final score = scoreGuess(word, _game.secretWord);
 
+    // 1. Lock the row and block input
+    setState(() {
+      row.isSettled = true;
+      _game.status = GameStatus.calculating;
+    });
+
+    // 2. Short delay before starting the spin animation
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+
+    // 3. Set the score. This triggers the AnimatedScoreTile slot machine animations.
     setState(() {
       row.score = score;
-      row.isSettled = true;
+    });
 
+    // 4. Wait for the staggered animations to complete (600ms base + 300ms max delay)
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (!mounted) return;
+
+    setState(() {
       // 5-Red auto-discard: globally lock all letters in this guess.
       if (score.isAllRed) {
         for (final letter in word.split('')) {
@@ -180,6 +196,7 @@ class _GameScreenState extends State<GameScreen> {
       // Advance to next row.
       _game.activeRowIndex++;
       _game.activeCellIndex = 0;
+      _game.status = GameStatus.playing;
     });
   }
 

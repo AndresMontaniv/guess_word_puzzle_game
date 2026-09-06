@@ -4,7 +4,7 @@ import 'scoring.dart';
 enum TileScratchColor { none, red, yellow, green }
 
 /// Overall game status.
-enum GameStatus { loading, playing, won, lost }
+enum GameStatus { loading, playing, calculating, won, lost }
 
 /// Data for a single row in the 8-row grid.
 class RowData {

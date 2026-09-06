@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../constants.dart';
 import '../game_state.dart';
@@ -73,11 +74,27 @@ class GameGrid extends StatelessWidget {
           }),
           SizedBox(width: kTileGap * 1.5),
           // 3 score tiles (Green, Yellow, Red)
-          _buildScoreTile(row, kTileGreen, row.score?.green, tileSize),
+          // 3 score tiles (Green, Yellow, Red) with staggered delays
+          AnimatedScoreTile(
+            bgColor: kTileGreen,
+            value: row.score?.green,
+            size: tileSize,
+            delay: Duration.zero,
+          ),
           const SizedBox(width: kTileGap / 2),
-          _buildScoreTile(row, kTileYellow, row.score?.yellow, tileSize),
+          AnimatedScoreTile(
+            bgColor: kTileYellow,
+            value: row.score?.yellow,
+            size: tileSize,
+            delay: const Duration(milliseconds: 150),
+          ),
           const SizedBox(width: kTileGap / 2),
-          _buildScoreTile(row, kTileRed, row.score?.red, tileSize),
+          AnimatedScoreTile(
+            bgColor: kTileRed,
+            value: row.score?.red,
+            size: tileSize,
+            delay: const Duration(milliseconds: 300),
+          ),
         ],
       ),
     );
@@ -135,30 +152,6 @@ class GameGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreTile(
-      RowData row, Color bgColor, int? value, double size) {
-    final fontSize = (size * 0.38).clamp(11.0, 18.0);
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(kTileBorderRadius),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        value != null ? '$value' : '',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-
   Color _scratchColorToColor(TileScratchColor sc) {
     switch (sc) {
       case TileScratchColor.red:
@@ -171,4 +164,117 @@ class GameGrid extends StatelessWidget {
         return kTileEmpty;
     }
   }
+}
+
+class AnimatedScoreTile extends StatefulWidget {
+  final Color bgColor;
+  final int? value;
+  final double size;
+  final Duration delay;
+
+  const AnimatedScoreTile({
+    super.key,
+    required this.bgColor,
+    this.value,
+    required this.size,
+    required this.delay,
+  });
+
+  @override
+  State<AnimatedScoreTile> createState() => _AnimatedScoreTileState();
+}
+
+class _AnimatedScoreTileState extends State<AnimatedScoreTile>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  int? _displayValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _animation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    if (widget.value != null) {
+      _displayValue = widget.value;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedScoreTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value == null && widget.value != null) {
+      _startSpinAnimation();
+    } else if (widget.value == null) {
+      _displayValue = null;
+      _controller.reset();
+    }
+  }
+
+  void _startSpinAnimation() async {
+    await Future.delayed(widget.delay);
+    if (!mounted) return;
+    setState(() {
+      _displayValue = widget.value;
+    });
+    _controller.forward(from: 0.0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = (widget.size * 0.4).clamp(12.0, 22.0); // Exact match with letter tiles
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        // animation.value goes 0.0 to 1.0
+        final angle = _animation.value * math.pi;
+
+        // Hide the number until the tile is halfway flipped
+        final isFrontVisible = _animation.value < 0.5;
+
+        return Transform(
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.002) // perspective
+            ..rotateX(angle),
+          alignment: Alignment.center,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              color: widget.bgColor,
+              borderRadius: BorderRadius.circular(kTileBorderRadius),
+            ),
+            alignment: Alignment.center,
+            child: isFrontVisible
+                ? const SizedBox.shrink()
+                : Transform(
+                    transform: Matrix4.identity()..rotateX(math.pi),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _displayValue != null ? '$_displayValue' : '',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
 }
