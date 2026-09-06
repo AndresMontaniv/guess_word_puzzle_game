@@ -82,4 +82,15 @@ class GameState {
 
   /// Returns the currently active row.
   RowData get activeRow => rows[activeRowIndex];
+
+  /// Returns all letters that have been played in settled rows.
+  Set<String> get usedLetters {
+    final used = <String>{};
+    for (final row in rows) {
+      if (row.isSettled) {
+        used.addAll(row.letters.where((l) => l.isNotEmpty && l != '_'));
+      }
+    }
+    return used;
+  }
 }

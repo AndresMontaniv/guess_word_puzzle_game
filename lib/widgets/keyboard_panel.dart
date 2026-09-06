@@ -4,28 +4,34 @@ import '../constants.dart';
 /// On-screen QWERTY keyboard with action buttons (Eraser, Hint, Space, Submit, Backspace).
 class KeyboardPanel extends StatelessWidget {
   final Set<String> disabledLetters;
+  final Set<String> usedLetters;
   final void Function(String letter) onLetterTap;
   final VoidCallback onBackspace;
   final VoidCallback onSpace;
   final VoidCallback onSubmit;
   final VoidCallback onErase;
+  final bool hasLettersToClear;
+  final bool canSubmit;
   final bool enabled;
 
   const KeyboardPanel({
     super.key,
     required this.disabledLetters,
+    required this.usedLetters,
     required this.onLetterTap,
     required this.onBackspace,
     required this.onSpace,
     required this.onSubmit,
     required this.onErase,
+    required this.hasLettersToClear,
+    required this.canSubmit,
     this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: kKbPanel.withValues(alpha: 0.95),
         border: Border.all(color: kKbBorder),
@@ -36,18 +42,18 @@ class KeyboardPanel extends StatelessWidget {
         children: [
           // Row 1: Q-P
           _buildLetterRow(kQwertyRows[0]),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // Row 2: A-L (slightly indented)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: _buildLetterRow(kQwertyRows[1]),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // Row 3: Z-M + Backspace
           _buildLetterRowWithBackspace(kQwertyRows[2]),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Row 4: Action bar (Eraser, Hint, Space, Submit)
           _buildActionBar(),
@@ -60,13 +66,15 @@ class KeyboardPanel extends StatelessWidget {
     return Row(
       children: letters.map((letter) {
         final isDisabled = disabledLetters.contains(letter);
+        final isUsed = usedLetters.contains(letter);
+        final bgColor = isDisabled ? kKeyDisabled : (isUsed ? kKeyDisabled : kKeyBg);
         return Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.5),
+            padding: const EdgeInsets.symmetric(horizontal: 1.5),
             child: _KeyButton(
               label: letter,
               onTap: (enabled && !isDisabled) ? () => onLetterTap(letter) : null,
-              bgColor: isDisabled ? kKeyDisabled : kKeyBg,
+              bgColor: bgColor,
               textColor: isDisabled
                   ? Colors.white.withValues(alpha: 0.2)
                   : Colors.white.withValues(alpha: 0.85),
@@ -83,14 +91,16 @@ class KeyboardPanel extends StatelessWidget {
         // Letter keys
         ...letters.map((letter) {
           final isDisabled = disabledLetters.contains(letter);
+          final isUsed = usedLetters.contains(letter);
+          final bgColor = isDisabled ? kKeyDisabled : (isUsed ? kKeyDisabled : kKeyBg);
           return Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2.5),
+              padding: const EdgeInsets.symmetric(horizontal: 1.5),
               child: _KeyButton(
                 label: letter,
                 onTap:
                     (enabled && !isDisabled) ? () => onLetterTap(letter) : null,
-                bgColor: isDisabled ? kKeyDisabled : kKeyBg,
+                bgColor: bgColor,
                 textColor: isDisabled
                     ? Colors.white.withValues(alpha: 0.2)
                     : Colors.white.withValues(alpha: 0.85),
@@ -101,11 +111,11 @@ class KeyboardPanel extends StatelessWidget {
         // Backspace button
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.5),
+            padding: const EdgeInsets.symmetric(horizontal: 1.5),
             child: _KeyButton(
               icon: Icons.backspace_outlined,
               onTap: enabled ? onBackspace : null,
-              bgColor: kKeyDisabled,
+              bgColor: hasLettersToClear ? kKeyBg : kKeyDisabled,
               textColor: Colors.white.withValues(alpha: 0.6),
             ),
           ),
@@ -127,7 +137,7 @@ class KeyboardPanel extends StatelessWidget {
             textColor: Colors.white.withValues(alpha: 0.6),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
 
         // Hint button (disabled placeholder)
         SizedBox(
@@ -139,7 +149,7 @@ class KeyboardPanel extends StatelessWidget {
             textColor: Colors.white.withValues(alpha: 0.3),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
 
         // Space bar
         Expanded(
@@ -152,7 +162,7 @@ class KeyboardPanel extends StatelessWidget {
             letterSpacing: 3,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
 
         // Submit / Checkmark button
         SizedBox(
@@ -160,7 +170,7 @@ class KeyboardPanel extends StatelessWidget {
           child: _KeyButton(
             icon: Icons.check,
             onTap: enabled ? onSubmit : null,
-            bgColor: kKeyDisabled,
+            bgColor: canSubmit ? kKeyBg : kKeyDisabled,
             textColor: Colors.white.withValues(alpha: 0.6),
           ),
         ),
@@ -198,7 +208,7 @@ class _KeyButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 50),
-          height: 44,
+          height: 36,
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(8),

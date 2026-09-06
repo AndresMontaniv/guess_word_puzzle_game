@@ -47,8 +47,7 @@ class _GameScreenState extends State<GameScreen> {
 
   Future<void> _selectSecretWord() async {
     final recentWords = await WordCache.getRecentWords();
-    final candidates =
-        validSecrets.where((w) => !recentWords.contains(w)).toList();
+    final candidates = validSecrets.where((w) => !recentWords.contains(w)).toList();
 
     final secret = candidates[_random.nextInt(candidates.length)];
     await WordCache.addWord(secret);
@@ -274,8 +273,7 @@ class _GameScreenState extends State<GameScreen> {
     setState(() {
       _game.reset();
       _shakeKeys.clear();
-      _shakeKeys.addAll(
-          List.generate(kMaxRows, (_) => GlobalKey<ShakeWidgetState>()));
+      _shakeKeys.addAll(List.generate(kMaxRows, (_) => GlobalKey<ShakeWidgetState>()));
     });
     _selectSecretWord();
   }
@@ -287,9 +285,7 @@ class _GameScreenState extends State<GameScreen> {
     if (_game.status == GameStatus.loading) {
       return Scaffold(
         backgroundColor: kBrandDark,
-        body: const Center(
-          child: CircularProgressIndicator(color: kTileGreen),
-        ),
+        body: const Center(child: CircularProgressIndicator(color: kTileGreen)),
       );
     }
 
@@ -309,22 +305,21 @@ class _GameScreenState extends State<GameScreen> {
 
                   // Game grid (takes remaining space)
                   Expanded(
-                    child: GameGrid(
-                      gameState: _game,
-                      shakeKeys: _shakeKeys,
-                      onTileTap: _onTileTap,
-                    ),
+                    child: GameGrid(gameState: _game, shakeKeys: _shakeKeys, onTileTap: _onTileTap),
                   ),
                   const SizedBox(height: 8),
 
                   // On-screen keyboard
                   KeyboardPanel(
                     disabledLetters: _game.disabledLetters,
+                    usedLetters: _game.usedLetters,
                     onLetterTap: _insertLetter,
                     onBackspace: _deleteLetter,
                     onSpace: _insertPlaceholder,
                     onSubmit: _submitGuess,
                     onErase: _onErase,
+                    hasLettersToClear: _game.activeCellIndex > 0,
+                    canSubmit: _game.activeRow.isFull,
                     enabled: _game.status == GameStatus.playing,
                   ),
                   const SizedBox(height: 8),
@@ -343,22 +338,14 @@ class _GameScreenState extends State<GameScreen> {
         // Back button
         IconButton(
           onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: Colors.white.withValues(alpha: 0.6),
-          ),
+          icon: Icon(Icons.arrow_back, color: Colors.white.withValues(alpha: 0.6)),
           splashRadius: 20,
         ),
         const Expanded(
           child: Text(
             'Guess The Word',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 1),
           ),
         ),
         // Spacer to balance the back button.
