@@ -1,7 +1,7 @@
 import Cocoa
 import FlutterMacOS
 
-class MainFlutterWindow: NSWindow, FlutterWindowDelegate {
+class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
     let windowFrame = self.frame
@@ -11,12 +11,5 @@ class MainFlutterWindow: NSWindow, FlutterWindowDelegate {
     RegisterGeneratedPlugins(registry: flutterViewController)
 
     super.awakeFromNib()
-  }
-
-  // Required by window_manager plugin
-  func windowWillStartLiveResize(_ notification: Notification) {
-  }
-
-  func windowDidEndLiveResize(_ notification: Notification) {
   }
 }
