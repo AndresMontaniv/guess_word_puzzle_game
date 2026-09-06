@@ -8,7 +8,6 @@ import '../dictionary.dart';
 import '../game_state.dart';
 import '../scoring.dart';
 import '../services/word_cache.dart';
-import '../widgets/game_dialogs.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/keyboard_panel.dart';
 import '../widgets/shake_animation.dart';
@@ -181,14 +180,14 @@ class _GameScreenState extends State<GameScreen> {
       // Check win.
       if (score.isWin) {
         _game.status = GameStatus.won;
-        _showWinDialog();
+        _revealBoard();
         return;
       }
 
       // Check loss (exhausted all 8 rows).
       if (_game.activeRowIndex >= kMaxRows - 1) {
         _game.status = GameStatus.lost;
-        _showLossDialog();
+        _revealBoard();
         return;
       }
 
@@ -206,6 +205,27 @@ class _GameScreenState extends State<GameScreen> {
       if (!row.isSettled) continue;
       for (int i = 0; i < kWordLength; i++) {
         if (_game.disabledLetters.contains(row.letters[i])) {
+          row.scratchColors[i] = TileScratchColor.red;
+        }
+      }
+    }
+  }
+
+  /// Reveals the exact correctness of every cell in all settled rows
+  /// using the uncapped scoring logic (Green, Yellow, Red).
+  void _revealBoard() {
+    final secretChars = _game.secretWord.split('');
+
+    for (final row in _game.rows) {
+      if (!row.isSettled) continue;
+
+      for (int i = 0; i < kWordLength; i++) {
+        final letter = row.letters[i];
+        if (letter == _game.secretWord[i]) {
+          row.scratchColors[i] = TileScratchColor.green;
+        } else if (secretChars.contains(letter)) {
+          row.scratchColors[i] = TileScratchColor.yellow;
+        } else {
           row.scratchColors[i] = TileScratchColor.red;
         }
       }
@@ -255,20 +275,6 @@ class _GameScreenState extends State<GameScreen> {
 
   // ─── Game Lifecycle ─────────────────────────────────────────────────────
 
-  void _showWinDialog() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showWinDialog(context, _game.activeRowIndex + 1, _resetGame);
-    });
-  }
-
-  void _showLossDialog() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showLossDialog(context, _game.secretWord, _resetGame);
-    });
-  }
-
   void _resetGame() {
     setState(() {
       _game.reset();
@@ -309,19 +315,22 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // On-screen keyboard
-                  KeyboardPanel(
-                    disabledLetters: _game.disabledLetters,
-                    usedLetters: _game.usedLetters,
-                    onLetterTap: _insertLetter,
-                    onBackspace: _deleteLetter,
-                    onSpace: _insertPlaceholder,
-                    onSubmit: _submitGuess,
-                    onErase: _onErase,
-                    hasLettersToClear: _game.activeCellIndex > 0,
-                    canSubmit: _game.activeRow.isFull,
-                    enabled: _game.status == GameStatus.playing,
-                  ),
+                  // On-screen keyboard or Game Over Panel
+                  if (_game.status == GameStatus.won || _game.status == GameStatus.lost)
+                    _buildGameOverPanel()
+                  else
+                    KeyboardPanel(
+                      disabledLetters: _game.disabledLetters,
+                      usedLetters: _game.usedLetters,
+                      onLetterTap: _insertLetter,
+                      onBackspace: _deleteLetter,
+                      onSpace: _insertPlaceholder,
+                      onSubmit: _submitGuess,
+                      onErase: _onErase,
+                      hasLettersToClear: _game.activeCellIndex > 0,
+                      canSubmit: _game.activeRow.isFull,
+                      enabled: _game.status == GameStatus.playing,
+                    ),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -351,6 +360,63 @@ class _GameScreenState extends State<GameScreen> {
         // Spacer to balance the back button.
         const SizedBox(width: 48),
       ],
+    );
+  }
+
+  Widget _buildGameOverPanel() {
+    final isWin = _game.status == GameStatus.won;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      decoration: BoxDecoration(
+        color: kBoardDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isWin ? kTileGreen.withValues(alpha: 0.3) : kTileRed.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        children: [
+          if (!isWin) ...[
+            const Text(
+              'The secret word was:',
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _game.secretWord,
+              style: const TextStyle(
+                color: kTileYellow,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 4,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (isWin) ...[
+            const Text(
+              'You won! 🎉',
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 16),
+          ],
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _resetGame,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kTileGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              child: const Text('Start New Game'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
