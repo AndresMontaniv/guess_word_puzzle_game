@@ -36,7 +36,7 @@ class GuessWordApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Guess The Word',
+      title: 'Guess Word Game',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
