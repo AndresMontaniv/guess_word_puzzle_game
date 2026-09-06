@@ -5,6 +5,7 @@ import 'package:window_manager/window_manager.dart';
 import 'constants.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/game_screen.dart';
+import 'screens/how_to_play_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class GuessWordApp extends StatelessWidget {
       routes: {
         '/': (_) => const WelcomeScreen(),
         '/game': (_) => const GameScreen(),
+        '/how_to_play': (_) => const HowToPlayScreen(),
       },
     );
   }

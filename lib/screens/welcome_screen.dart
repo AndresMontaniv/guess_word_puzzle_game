@@ -85,6 +85,31 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // How to Play button
+              SizedBox(
+                width: 200,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/how_to_play');
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  child: const Text('HOW TO PLAY'),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Subtitle
               Text(
                 '8 attempts · 5 letters · Offline',
