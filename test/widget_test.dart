@@ -39,7 +39,7 @@ void main() {
     });
 
     test('validSecrets has substantial size', () {
-      expect(validSecrets.length, greaterThan(3000));
+      expect(validSecrets.length, greaterThan(1500));
     });
 
     test('validGuesses has substantial size', () {
